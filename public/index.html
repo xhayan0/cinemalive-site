@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🎬 سینما لایو</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        /* ============================================================
+           استایل‌های اصلی سینما لایو
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Tahoma', sans-serif;
+            background: #0a0a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f0b90b;
+            border-radius: 10px;
+        }
+
+        /* ===== هدر ===== */
+        .header {
+            background: #14142a;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a2a50;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .header .logo img {
+            height: 36px;
+            border-radius: 8px;
+        }
+        .header .logo span {
+            color: #f0b90b;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .header .nav {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .header .nav a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .header .nav a:hover,
+        .header .nav a.active {
+            color: #f0b90b;
+            background: rgba(240, 185, 11, 0.1);
+        }
+        .header .auth-btn {
+            background: #f0b90b;
+            color: #0a0a1a !important;
+            padding: 6px 18px !important;
+            border-radius: 30px !important;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .header .auth-btn:hover {
+            background: #f5c542;
+            transform: scale(1.04);
+        }
+        .header .user-menu {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .header .user-menu .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #2a2a50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #f0b90b;
+            border: 2px solid #f0b90b;
+            object-fit: cover;
+        }
+        .header .user-menu .dropdown {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 40px;
+            background: #1a1a36;
+            border: 1px solid #2a2a50;
+            border-radius: 16px;
+            padding: 8px 0;
+            min-width: 180px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            z-index: 200;
+        }
+        .header .user-menu:hover .dropdown {
+            display: block;
+        }
+        .header .user-menu .dropdown a {
+            display: block;
+            padding: 8px 20px;
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.15s;
+        }
+        .header .user-menu .dropdown a:hover {
+            background: #2a2a50;
+            color: #f0b90b;
+        }
+        .header .user-menu .dropdown .divider {
+            border-top: 1px solid #2a2a50;
+            margin: 6px 12px;
+        }
+
+        /* ===== صفحات ===== */
+        .page {
+            display: none;
+            padding: 16px;
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: 80px;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* ===== صفحه اصلی ===== */
+        .hero {
+            text-align: center;
+            padding: 30px 0 20px;
+            background: url('https://github.com/xhayan0/sync-video/blob/main/public/91armhHyTML.jpg?raw=true') center/cover no-repeat;
+            border-radius: 24px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+            z-index: 0;
+        }
+        .hero>* {
+            position: relative;
+            z-index: 1;
+        }
+        .hero h1 {
+            font-size: 32px;
+            margin-bottom: 12px;
+            color: #f0b90b;
+        }
+        .hero p {
+            font-size: 18px;
+            max-width: 500px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        .hero .steps {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 16px 0;
+        }
+        .hero .steps .step {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(6px);
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .hero .btn-hero {
+            background: #f0b90b;
+            color: #0a0a1a;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 12px;
+        }
+        .hero .btn-hero:hover {
+            transform: scale(1.05);
+            background: #f5c542;
+        }
+
+        /* ===== فرم‌ها ===== */
+        .form-card {
+            background: #14142a;
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid #2a2a50;
+            max-width: 420px;
+            margin: 20px auto;
+        }
+        .form-card h2 {
+            color: #f0b90b;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .form-card .input-group {
+            margin-bottom: 14px;
+        }
+        .form-card .input-group label {
+            display: block;
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .form-card .input-group input,
+        .form-card .input-group select,
+        .form-card .input-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a2a50;
+            background: #0a0a1a;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .form-card .input-group input:focus,
+        .form-card .input-group select:focus,
+        .form-card .input-group textarea:focus {
+            border-color: #f0b90b;
+        }
+        .form-card .btn-submit {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 30px;
+            background: #f0b90b;
+            color: #0a0a1a;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .form-card .btn-submit:hover {
+            background: #f5c542;
+        }
+        .form-card .switch-link {
+            text-align: center;
+            margin-top: 12px;
+            color: #888;
+            font-size: 14px;
+        }
+        .form-card .switch-link a {
+            color: #f0b90b;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .error-msg {
+            color: #ff5252;
+            font-size: 13px;
+            margin-top: 6px;
+            text-align: center;
+        }
+        .success-msg {
+            color: #4caf50;
+            font-size: 13px;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* ===== کارت فیلم ===== */
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .movie-card {
+            background: #14142a;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #2a2a50;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .movie-card:hover {
+            transform: scale(1.03);
+            border-color: #f0b90b;
+        }
+        .movie-card img {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            background: #0a0a1a;
+        }
+        .movie-card .info {
+            padding: 10px 12px 14px;
+        }
+        .movie-card .info .title {
+            font-weight: bold;
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .movie-card .info .meta {
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .movie-card .info .meta .badge {
+            background: #2a2a50;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+        }
+
+        /* ===== پنل ادمین ===== */
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .admin-stats .stat {
+            background: #14142a;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #2a2a50;
+        }
+        .admin-stats .stat .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f0b90b;
+        }
+        .admin-stats .stat .label {
+            font-size: 13px;
+            color: #888;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .admin-table th {
+            text-align: right;
+            padding: 8px 12px;
+            background: #1a1a36;
+            color: #aaa;
+        }
+        .admin-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #1a1a36;
+        }
+        .admin-table .btn-sm {
+            padding: 4px 12px;
+            border: none;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-sm.approve {
+            background: #4caf50;
+            color: #fff;
+        }
+        .btn-sm.reject {
+            background: #ff5252;
+            color: #fff;
+        }
+        .btn-sm.ban {
+            background: #ff8a65;
+            color: #fff;
+        }
+        .btn-sm.unban {
+            background: #4fc3f7;
+            color: #fff;
+        }
+
+        /* ===== اتاق ===== */
+        .room-container {
+            background: #0f0f22;
+            border-radius: 24px;
+            padding: 16px;
+            border: 1px solid #2a2a50;
+        }
+        .room-video {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .room-video video {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .room-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 12px 0;
+        }
+        .room-controls .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #2a2a50;
+            color: #ccc;
+        }
+        .room-controls .btn:hover {
+            background: #3a3a5a;
+        }
+        .room-controls .btn-primary {
+            background: #f0b90b;
+            color: #0a0a1a;
+        }
+        .room-controls .btn-primary:hover {
+            background: #f5c542;
+        }
+        .room-controls .btn-danger {
+            background: #ff5252;
+            color: #fff;
+        }
+        .room-controls .btn-danger:hover {
+            background: #ff6b6b;
+        }
+        .room-chat {
+            background: #0a0a1a;
+            border-radius: 16px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #1a1a36;
+        }
+        .room-chat .msg {
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a36;
+            font-size: 13px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .room-chat .msg .user {
+            color: #f0b90b;
+            font-weight: bold;
+        }
+        .room-chat .msg .time {
+            color: #555;
+            font-size: 11px;
+            margin-right: auto;
+        }
+        .room-input-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .room-input-row input {
+            flex: 1;
+            padding: 8px 14px;
+            border-radius: 30px;
+            border: 1px solid #2a2a50;
+            background: #0a0a1a;
+            color: #fff;
+            outline: none;
+        }
+        .room-input-row input:focus {
+            border-color: #f0b90b;
+        }
+        .room-input-row button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 30px;
+            background: #f0b90b;
+            color: #0a0a1a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .room-emoji-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            justify-content: center;
+        }
+        .room-emoji-row .emoji-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 20px;
+            background: #1a1a36;
+            border: 1px solid #2a2a50;
+            transition: 0.15s;
+        }
+        .room-emoji-row .emoji-btn:hover {
+            transform: scale(1.2);
+            border-color: #f0b90b;
+        }
+
+        /* ===== عمومی ===== */
+        .text-center {
+            text-align: center;
+        }
+        .mt-12 {
+            margin-top: 12px;
+        }
+        .mt-20 {
+            margin-top: 20px;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== واکنش‌گرا ===== */
+        @media (max-width: 550px) {
+            .header .nav a {
+                font-size: 12px;
+                padding: 2px 6px;
+            }
+            .header .logo span {
+                font-size: 16px;
+            }
+            .hero h1 {
+                font-size: 24px;
+            }
+            .hero p {
+                font-size: 15px;
+            }
+            .hero .steps .step {
+                font-size: 12px;
+                padding: 8px 14px;
+            }
+            .movie-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            .admin-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            .room-controls .btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+        @media (max-width: 400px) {
+            .header .nav {
+                gap: 4px;
+            }
+            .header .nav a {
+                font-size: 11px;
+                padding: 2px 4px;
+            }
+            .movie-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== هدر ===== -->
+    <header class="header" id="appHeader">
+        <a class="logo" onclick="navigateTo('/')">
+            <img src="https://github.com/xhayan0/sync-video/blob/main/public/logo.jpg?raw=true" alt="سینما لایو" />
+            <span>سینما لایو</span>
+        </a>
+        <nav class="nav" id="mainNav">
+            <a onclick="navigateTo('/')" data-page="/" class="active">خانه</a>
+            <a onclick="navigateTo('/movies')" data-page="/movies">فیلم‌ها</a>
+            <a onclick="navigateTo('/plans')" data-page="/plans">تعرفه‌ها</a>
+            <a onclick="navigateTo('/public-chat')" data-page="/public-chat">چت عمومی</a>
+            <a onclick="navigateTo('/help')" data-page="/help">راهنما</a>
+        </nav>
+        <div id="authSection">
+            <button class="auth-btn" onclick="navigateTo('/auth')">ورود / ثبت‌نام</button>
+        </div>
+        <div id="userSection" class="user-menu hidden">
+            <div class="avatar" id="userAvatar">👤</div>
+            <div class="dropdown">
+                <a onclick="navigateTo('/profile')">👤 پروفایل</a>
+                <a onclick="navigateTo('/my-rooms')">🏠 اتاق‌های من</a>
+                <a onclick="navigateTo('/movies')">🎬 فیلم‌ها</a>
+                <div class="divider"></div>
+                <a onclick="handleLogout()" style="color:#ff5252;">🚪 خروج</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== صفحات ===== -->
+    <main id="app">
+
+        <!-- صفحه اصلی -->
+        <div class="page active" id="page-/">
+            <div class="hero">
+                <h1>🎬 سینما لایو</h1>
+                <p>همزمان با دوستات فیلم و سریال ببین، چت کن و لحظات شاد بساز!</p>
+                <div class="steps">
+                    <span class="step">1️⃣ اتاق بساز</span>
+                    <span class="step">2️⃣ کد اتاق رو به دوستات بده</span>
+                    <span class="step">3️⃣ از تماشای همزمان لذت ببر</span>
+                </div>
+                <button class="btn-hero" onclick="handleBuildRoom()">🚀 همین الان اتاقتو بساز</button>
+            </div>
+            <div class="text-center mt-20" style="color:#888;font-size:14px;">
+                🔥 با ثبت‌نام از طریق تلگرام، ۷ روز اشتراک رایگان دریافت کن!
+            </div>
+        </div>
+
+        <!-- صفحه ورود / ثبت‌نام -->
+        <div class="page" id="page-/auth">
+            <div class="form-card" id="loginForm">
+                <h2>🔐 ورود</h2>
+                <div class="input-group">
+                    <label>ایمیل</label>
+                    <input type="email" id="loginEmail" placeholder="ایمیل خود را وارد کنید" />
+                </div>
+                <div class="input-group">
+                    <label>رمز عبور</label>
+                    <input type="password" id="loginPassword" placeholder="رمز عبور" />
+                </div>
+                <button class="btn-submit" onclick="handleLogin()">ورود</button>
+                <div id="loginError" class="error-msg"></div>
+                <div class="switch-link">
+                    حساب ندارید؟ <a onclick="showRegister()">ثبت‌نام کنید</a>
+                </div>
+                <div class="switch-link">
+                    <a onclick="showForgotPassword()">رمز عبور را فراموش کرده‌اید؟</a>
+                </div>
+                <div class="switch-link" style="margin-top:8px;border-top:1px solid #2a2a50;padding-top:12px;">
+                    <a onclick="handleTelegramLogin()" style="color:#4fc3f7;">🎯 ورود با تلگرام</a>
+                </div>
+            </div>
+
+            <div class="form-card hidden" id="registerForm">
+                <h2>📝 ثبت‌نام</h2>
+                <div class="input-group">
+                    <label>ایمیل</label>
+                    <input type="email" id="regEmail" placeholder="ایمیل خود را وارد کنید" />
+                </div>
+                <div class="input-group">
+                    <label>رمز عبور</label>
+                    <input type="password" id="regPassword" placeholder="رمز عبور (حداقل ۶ کاراکتر)" />
+                </div>
+                <div class="input-group">
+                    <label>تکرار رمز عبور</label>
+                    <input type="password" id="regConfirmPassword" placeholder="تکرار رمز عبور" />
+                </div>
+                <button class="btn-submit" onclick="handleRegister()">ثبت‌نام</button>
+                <div id="regError" class="error-msg"></div>
+                <div id="regSuccess" class="success-msg"></div>
+                <div class="switch-link">
+                    قبلاً ثبت‌نام کرده‌اید؟ <a onclick="showLogin()">وارد شوید</a>
+                </div>
+            </div>
+
+            <div class="form-card hidden" id="forgotForm">
+                <h2>🔑 بازنشانی رمز عبور</h2>
+                <div class="input-group">
+                    <label>ایمیل</label>
+                    <input type="email" id="forgotEmail" placeholder="ایمیل خود را وارد کنید" />
+                </div>
+                <button class="btn-submit" onclick="handleForgotPassword()">ارسال کد</button>
+                <div id="forgotError" class="error-msg"></div>
+                <div id="forgotSuccess" class="success-msg"></div>
+                <div class="switch-link">
+                    <a onclick="showLogin()">بازگشت به ورود</a>
+                </div>
+            </div>
+
+            <div class="form-card hidden" id="resetForm">
+                <h2>🔐 بازنشانی رمز</h2>
+                <div class="input-group">
+                    <label>ایمیل</label>
+                    <input type="email" id="resetEmail" placeholder="ایمیل" />
+                </div>
+                <div class="input-group">
+                    <label>کد تأیید</label>
+                    <input type="text" id="resetOtp" placeholder="کد ۶ رقمی" maxlength="6" />
+                </div>
+                <div class="input-group">
+                    <label>رمز عبور جدید</label>
+                    <input type="password" id="resetPassword" placeholder="رمز عبور جدید" />
+                </div>
+                <div class="input-group">
+                    <label>تکرار رمز عبور</label>
+                    <input type="password" id="resetConfirmPassword" placeholder="تکرار رمز عبور" />
+                </div>
+                <button class="btn-submit" onclick="handleResetPassword()">تغییر رمز عبور</button>
+                <div id="resetError" class="error-msg"></div>
+                <div id="resetSuccess" class="success-msg"></div>
+            </div>
+        </div>
+
+        <!-- صفحه فیلم‌ها -->
+        <div class="page" id="page-/movies">
+            <div class="flex-between">
+                <h2 style="color:#f0b90b;">🎬 فیلم و سریال‌ها</h2>
+                <span style="font-size:13px;color:#888;" id="movieCount"></span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+                <input type="text" id="movieSearch" placeholder="جستجو..." style="flex:1;padding:8px 14px;border-radius:30px;border:1px solid #2a2a50;background:#0a0a1a;color:#fff;outline:none;" />
+                <select id="movieType" style="padding:8px 14px;border-radius:30px;border:1px solid #2a2a50;background:#0a0a1a;color:#fff;">
+                    <option value="">همه</option>
+                    <option value="movie">فیلم</option>
+                    <option value="series">سریال</option>
+                    <option value="animation">انیمیشن</option>
+                </select>
+                <select id="movieGenre" style="padding:8px 14px;border-radius:30px;border:1px solid #2a2a50;background:#0a0a1a;color:#fff;">
+                    <option value="">همه ژانرها</option>
+                </select>
+                <select id="movieCountry" style="padding:8px 14px;border-radius:30px;border:1px solid #2a2a50;background:#0a0a1a;color:#fff;">
+                    <option value="">همه کشورها</option>
+                </select>
+                <select id="movieDub" style="padding:8px 14px;border-radius:30px;border:1px solid #2a2a50;background:#0a0a1a;color:#fff;">
+                    <option value="">همه</option>
+                    <option value="dubbed">دوبله فارسی</option>
+                    <option value="subtitle">زیرنویس</option>
+                </select>
+                <button class="btn-submit" style="padding:8px 20px;width:auto;" onclick="loadMovies(1)">اعمال</button>
+            </div>
+            <div class="movie-grid" id="movieGrid">
+                <div style="text-align:center;color:#888;padding:40px 0;">در حال بارگذاری...</div>
+            </div>
+            <div class="text-center mt-12" id="moviePagination"></div>
+        </div>
+
+        <!-- صفحه تعرفه‌ها -->
+        <div class="page" id="page-/plans">
+            <h2 style="color:#f0b90b;text-align:center;">💰 تعرفه‌های اشتراک</h2>
+            <p style="text-align:center;color:#888;font-size:14px;">با تهیه اشتراک، از تماشای همزمان با دوستان لذت ببرید!</p>
+            <div id="plansContainer" style="display:grid;grid-template-columns:1fr;gap:16px;margin-top:20px;"></div>
+        </div>
+
+        <!-- صفحه خرید اشتراک -->
+        <div class="page" id="page-/buy">
+            <h2 style="color:#f0b90b;text-align:center;">🛒 خرید اشتراک</h2>
+            <div class="form-card" style="max-width:500px;">
+                <div id="buyPlanInfo" style="text-align:center;margin-bottom:16px;">
+                    <h3 id="buyPlanTitle">...</h3>
+                    <p id="buyPlanPrice" style="color:#f0b90b;font-size:20px;"></p>
+                </div>
+                <div style="text-align:center;margin:16px 0;">
+                    <img src="https://github.com/xhayan0/sync-video/blob/main/public/card.jpg?raw=true" alt="شماره کارت" style="max-width:100%;border-radius:16px;border:1px solid #2a2a50;" />
+                    <p style="color:#888;font-size:13px;margin-top:8px;">💳 لطفاً مبلغ را به شماره کارت بالا واریز کنید.</p>
+                </div>
+                <div class="input-group">
+                    <label>اسکرین‌شات واریز</label>
+                    <input type="file" id="screenshotInput" accept="image/*" />
+                </div>
+                <button class="btn-submit" onclick="handleBuySubscription()">ارسال سفارش</button>
+                <div id="buyError" class="error-msg"></div>
+                <div id="buySuccess" class="success-msg"></div>
+            </div>
+        </div>
+
+        <!-- صفحه اتاق‌های من -->
+        <div class="page" id="page-/my-rooms">
+            <h2 style="color:#f0b90b;">🏠 اتاق‌های من</h2>
+            <div id="myRoomsContainer" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- صفحه اتاق پخش -->
+        <div class="page" id="page-/room">
+            <div class="room-container">
+                <div class="flex-between">
+                    <h3 id="roomName" style="color:#f0b90b;">اتاق من</h3>
+                    <span id="roomCode" style="color:#888;font-size:13px;">کد: ---</span>
+                </div>
+                <div style="display:flex;gap:8px;margin:8px 0;">
+                    <input type="text" id="videoUrlInput" placeholder="لینک فیلم یا سریال را وارد کنید..." style="flex:1;padding:8px 14px;border-radius:30px;border:1px solid #2a2a50;background:#0a0a1a;color:#fff;outline:none;" />
+                    <button class="btn-primary" onclick="handlePlayVideo()">▶ پخش</button>
+                    <button class="btn" onclick="showMovieSelector()">📂 انتخاب از سایت</button>
+                </div>
+                <div class="room-video">
+                    <video id="roomVideo" controls controlsList="nodownload" disablePictureInPicture></video>
+                </div>
+                <div class="room-controls">
+                    <button class="btn btn-primary" onclick="roomPlay()">▶ پلی</button>
+                    <button class="btn" onclick="roomPause()">⏸ استپ</button>
+                    <button class="btn" onclick="roomSeek(-5)">⏪ ۵-</button>
+                    <button class="btn" onclick="roomSeek(5)">⏩ ۵+</button>
+                    <button class="btn" onclick="copyRoomCode()">📋 کپی کد</button>
+                    <span id="roomUsers" style="color:#888;font-size:13px;">👥 ۰ نفر</span>
+                </div>
+                <div id="roomNowPlaying" style="text-align:center;color:#888;font-size:13px;">هیچ فیلمی در حال پخش نیست</div>
+                <div class="room-chat" id="roomChat">
+                    <div class="msg" style="color:#666;justify-content:center;">به چت اتاق خوش آمدید!</div>
+                </div>
+                <div class="room-input-row">
+                    <input type="text" id="roomChatInput" placeholder="پیام خود را بنویس..." />
+                    <button onclick="sendRoomChat()">📤</button>
+                </div>
+                <div class="room-emoji-row" id="roomEmojiRow">
+                    <button class="emoji-btn" onclick="sendReaction('😂')">😂</button>
+                    <button class="emoji-btn" onclick="sendReaction('❤️')">❤️</button>
+                    <button class="emoji-btn" onclick="sendReaction('🥺')">🥺</button>
+                    <button class="emoji-btn" onclick="sendReaction('☹️')">☹️</button>
+                    <button class="emoji-btn" onclick="sendReaction('😐')">😐</button>
+                    <button class="emoji-btn" onclick="sendReaction('🤔')">🤔</button>
+                    <button class="emoji-btn" onclick="sendReaction('😤')">😤</button>
+                    <button class="emoji-btn" onclick="sendReaction('😱')">😱</button>
+                </div>
+                <div style="text-align:center;margin-top:12px;">
+                    <button class="btn btn-danger" onclick="leaveRoom()">🚪 خروج از اتاق</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- صفحه پروفایل -->
+        <div class="page" id="page-/profile">
+            <h2 style="color:#f0b90b;">👤 پروفایل</h2>
+            <div class="form-card" style="max-width:500px;">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                    <img id="profileAvatar" src="" alt="آواتار" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid #f0b90b;" />
+                    <div>
+                        <div id="profileDisplayName" style="font-size:18px;font-weight:bold;">---</div>
+                        <div id="profileUsername" style="color:#888;font-size:14px;">@---</div>
+                        <div id="profileEmail" style="color:#888;font-size:13px;"></div>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>نام نمایشی</label>
+                    <input type="text" id="editDisplayName" placeholder="نام نمایشی" />
+                </div>
+                <div class="input-group">
+                    <label>نام کاربری</label>
+                    <input type="text" id="editUsername" placeholder="نام کاربری" />
+                </div>
+                <div class="input-group">
+                    <label>آواتار</label>
+                    <input type="file" id="editAvatar" accept="image/*" />
+                </div>
+                <button class="btn-submit" onclick="updateProfile()">ذخیره تغییرات</button>
+                <div id="profileError" class="error-msg"></div>
+                <div id="profileSuccess" class="success-msg"></div>
+                <hr style="border-color:#2a2a50;margin:16px 0;" />
+                <h4 style="color:#aaa;">🔗 اتصال به تلگرام</h4>
+                <div class="input-group">
+                    <label>آیدی عددی تلگرام</label>
+                    <input type="text" id="telegramIdInput" placeholder="مثلاً 123456789" />
+                </div>
+                <button class="btn-submit" onclick="connectTelegram()" style="background:#4fc3f7;">اتصال به تلگرام</button>
+                <div id="telegramError" class="error-msg"></div>
+                <div id="telegramSuccess" class="success-msg"></div>
+                <hr style="border-color:#2a2a50;margin:16px 0;" />
+                <h4 style="color:#aaa;">🔑 تغییر رمز عبور</h4>
+                <div class="input-group">
+                    <label>رمز عبور قدیمی</label>
+                    <input type="password" id="oldPassword" placeholder="رمز عبور قدیمی" />
+                </div>
+                <div class="input-group">
+                    <label>رمز عبور جدید</label>
+                    <input type="password" id="newPassword" placeholder="رمز عبور جدید" />
+                </div>
+                <div class="input-group">
+                    <label>تکرار رمز عبور جدید</label>
+                    <input type="password" id="confirmNewPassword" placeholder="تکرار رمز عبور جدید" />
+                </div>
+                <button class="btn-submit" onclick="changePassword()">تغییر رمز عبور</button>
+                <div id="passwordError" class="error-msg"></div>
+                <div id="passwordSuccess" class="success-msg"></div>
+            </div>
+        </div>
+
+        <!-- صفحه راهنما -->
+        <div class="page" id="page-/help">
+            <h2 style="color:#f0b90b;text-align:center;">📖 راهنمای سینما لایو</h2>
+            <div style="background:#14142a;border-radius:24px;padding:20px;border:1px solid #2a2a50;margin-top:16px;">
+                <h3 style="color:#f0b90b;">🎯 چطور اتاق بسازیم؟</h3>
+                <p style="color:#ccc;">بعد از ورود به سایت، روی دکمه "اتاق بساز" کلیک کنید. اگر اشتراک فعال دارید، اتاق شما ساخته میشه و کد اتاق به شما داده میشه.</p>
+                <hr style="border-color:#2a2a50;margin:12px 0;" />
+                <h3 style="color:#f0b90b;">👥 چطور دوستان رو به اتاق دعوت کنیم؟</h3>
+                <p style="color:#ccc;">کد اتاق رو به دوستان بدید. دوستان با وارد کردن کد در صفحه "پیوستن به اتاق" درخواست ورود می‌دن. شما (مدیر اتاق) درخواست رو تایید میکنید و همه با هم فیلم می‌بینید.</p>
+                <hr style="border-color:#2a2a50;margin:12px 0;" />
+                <h3 style="color:#f0b90b;">🎬 چطور فیلم یا سریال پخش کنیم؟</h3>
+                <p style="color:#ccc;">در صفحه اتاق، لینک فیلم رو در کادر وارد کنید. یا از دکمه "انتخاب از سایت" فیلم/سریال مورد نظر رو انتخاب کنید. با زدن دکمه پخش، فیلم برای همه پخش میشه.</p>
+                <hr style="border-color:#2a2a50;margin:12px 0;" />
+                <h3 style="color:#f0b90b;">💰 چطور اشتراک بخریم؟</h3>
+                <p style="color:#ccc;">از منوی سایت، روی "تعرفه‌ها" کلیک کنید. پلن مورد نظر رو انتخاب کنید. مبلغ رو به شماره کارت واریز کنید و اسکرین‌شات رو آپلود کنید. بعد از تأیید ادمین، اشتراک شما فعال میشه.</p>
+                <hr style="border-color:#2a2a50;margin:12px 0;" />
+                <h3 style="color:#f0b90b;">🔗 چطور با ایمیل ثبت‌نام کنیم و به ربات متصل بشیم؟</h3>
+                <p style="color:#ccc;">برای اتصال به ربات، توی پروفایل روی دکمه "اتصال به تلگرام" کلیک کنید، ربات کد تأیید میده و شما کد رو توی سایت وارد میکنید و اکانت شما به ربات متصل میشه. اگر از طریق ربات تلگرامی ثبت نام کنید ۷ روز اشتراک رایگان دریافت میکنید.</p>
+            </div>
+        </div>
+
+        <!-- صفحه چت عمومی -->
+        <div class="page" id="page-/public-chat">
+            <h2 style="color:#f0b90b;">💬 چت عمومی</h2>
+            <p style="color:#888;font-size:13px;">همه کاربران می‌توانند در اینجا چت کنند. برای ارسال پیام باید ثبت‌نام کرده باشید.</p>
+            <div class="room-chat" id="publicChat" style="height:300px;max-height:400px;">
+                <div class="msg" style="color:#666;justify-content:center;">به چت عمومی خوش آمدید!</div>
+            </div>
+            <div class="room-input-row">
+                <input type="text" id="publicChatInput" placeholder="پیام خود را بنویس..." />
+                <button onclick="sendPublicChat()">📤</button>
+            </div>
+        </div>
+
+        <!-- صفحه پنل ادمین -->
+        <div class="page" id="page-/admin-secret">
+            <h2 style="color:#f0b90b;">🔐 پنل ادمین</h2>
+            <div class="admin-stats" id="adminStats">
+                <div class="stat"><div class="number" id="statUsers">0</div><div class="label">کاربران</div></div>
+                <div class="stat"><div class="number" id="statOrders">0</div><div class="label">سفارشات</div></div>
+                <div class="stat"><div class="number" id="statPending">0</div><div class="label">در انتظار</div></div>
+                <div class="stat"><div class="number" id="statSubs">0</div><div class="label">اشتراک فعال</div></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                <button class="btn-submit" style="width:auto;padding:8px 20px;" onclick="loadAdminUsers()">👥 کاربران</button>
+                <button class="btn-submit" style="width:auto;padding:8px 20px;background:#4fc3f7;" onclick="loadAdminOrders()">📦 سفارشات</button>
+                <button class="btn-submit" style="width:auto;padding:8px 20px;background:#ff8a65;" onclick="showAddMovieForm()">🎬 افزودن فیلم</button>
+            </div>
+            <div id="adminContent">
+                <div style="text-align:center;color:#888;padding:20px 0;">بخشی را انتخاب کنید.</div>
+            </div>
+            <!-- فرم افزودن فیلم -->
+            <div id="addMovieForm" class="hidden form-card" style="max-width:100%;">
+                <h3 style="color:#f0b90b;">➕ افزودن فیلم/سریال</h3>
+                <div class="input-group"><label>نوع</label>
+                    <select id="movieTypeInput"><option value="movie">فیلم</option><option value="series">سریال</option><option value="animation">انیمیشن</option></select>
+                </div>
+                <div class="input-group"><label>عنوان</label><input type="text" id="movieTitleInput" /></div>
+                <div class="input-group"><label>پوستر</label><input type="file" id="moviePosterInput" accept="image/*" /></div>
+                <div class="input-group"><label>دوبله/زیرنویس</label>
+                    <select id="movieDubInput"><option value="dubbed">دوبله فارسی</option><option value="subtitle">زیرنویس</option></select>
+                </div>
+                <div class="input-group"><label>ژانر</label><input type="text" id="movieGenreInput" placeholder="مثلاً اکشن، کمدی" /></div>
+                <div class="input-group"><label>امتیاز IMDb</label><input type="number" id="movieRatingInput" step="0.1" min="0" max="10" /></div>
+                <div class="input-group"><label>سال انتشار</label><input type="number" id="movieYearInput" min="1900" max="2025" /></div>
+                <div class="input-group"><label>کشور سازنده</label><input type="text" id="movieCountryInput" /></div>
+                <div class="input-group"><label>رده سنی</label><input type="text" id="movieAgeInput" placeholder="مثلاً PG-13" /></div>
+                <div class="input-group"><label>خلاصه داستان</label><textarea id="movieSummaryInput" rows="3"></textarea></div>
+                <div class="input-group"><label>توضیحات تکمیلی (اختیاری)</label><textarea id="movieExtraInput" rows="2"></textarea></div>
+                <div id="seriesLinksContainer">
+                    <label>لینک‌های قسمت‌ها (برای سریال)</label>
+                    <div style="display:flex;gap:8px;margin-bottom:6px;">
+                        <input type="text" id="episodeLinkInput" placeholder="لینک قسمت" style="flex:1;" />
+                        <input type="number" id="episodeNumberInput" placeholder="شماره قسمت" style="width:80px;" />
+                        <button onclick="addEpisodeLink()" style="padding:6px 16px;border:none;border-radius:30px;background:#f0b90b;color:#0a0a1a;font-weight:bold;">+</button>
+                    </div>
+                    <div id="episodeLinksList" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+                </div>
+                <button class="btn-submit" onclick="submitMovie()">ذخیره فیلم</button>
+                <div id="movieFormError" class="error-msg"></div>
+                <div id="movieFormSuccess" class="success-msg"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ===== اسکریپت اصلی ===== -->
+    <script>
+        // ============================================================
+        //  سینما لایو - فرانت‌اند کامل
+        // ============================================================
+
+        // ---------- متغیرهای عمومی ----------
+        const API_BASE = '';
+        let currentUser = null;
+        let currentRoomCode = null;
+        let currentRoomId = null;
+        let socket = null;
+        let isRoomOwner = false;
+        let moviePage = 1;
+        let episodeLinks = [];
+
+        // ---------- ناوبری ----------
+        function navigateTo(page) {
+            // مخفی کردن همه صفحات
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // نمایش صفحه مورد نظر
+            const target = document.querySelector(`#page-${page}`);
+            if (target) target.classList.add('active');
+            // به‌روزرسانی منو
+            document.querySelectorAll('#mainNav a').forEach(a => a.classList.remove('active'));
+            const navLink = document.querySelector(`#mainNav a[data-page="${page}"]`);
+            if (navLink) navLink.classList.add('active');
+            // بارگذاری دیتا در صورت نیاز
+            if (page === '/movies') loadMovies(1);
+            if (page === '/my-rooms') loadMyRooms();
+            if (page === '/plans') loadPlans();
+            if (page === '/admin-secret') loadAdminStats();
+            if (page === '/profile') loadProfile();
+            if (page === '/public-chat') initPublicChat();
+            // اگر صفحه اتاق هست، پارامترها رو چک کن
+            if (page.startsWith('/room')) {
+                const parts = page.split('/');
+                const code = parts[2];
+                if (code) joinRoom(code);
+            }
+        }
+
+        // ---------- مدیریت احراز هویت ----------
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    currentUser = data.user;
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('userSection').classList.remove('hidden');
+                    document.getElementById('userAvatar').textContent = currentUser.displayName.charAt(0).toUpperCase();
+                    // به‌روزرسانی منو برای کاربر لاگین شده
+                    updateNavForUser();
+                    return true;
+                }
+            } catch (e) {}
+            // کاربر لاگین نیست
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            return false;
+        }
+
+        function updateNavForUser() {
+            const nav = document.getElementById('mainNav');
+            // اضافه کردن لینک‌های اختصاصی کاربر
+            const existing = nav.querySelector('[data-page="/my-rooms"]');
+            if (!existing && currentUser) {
+                const link = document.createElement('a');
+                link.setAttribute('data-page', '/my-rooms');
+                link.onclick = () => navigateTo('/my-rooms');
+                link.textContent = '🏠 اتاق‌های من';
+                nav.appendChild(link);
+                // همچنین لینک پروفایل در منوی هدر
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            errorEl.textContent = '';
+            if (!email || !password) { errorEl.textContent = 'همه فیلدها الزامی هستند.'; return; }
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await checkAuth();
+                    navigateTo('/');
+                } else {
+                    errorEl.textContent = data.error || 'خطا در ورود';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        async function handleRegister() {
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirmPassword').value;
+            const errorEl = document.getElementById('regError');
+            const successEl = document.getElementById('regSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+            if (!email || !password || !confirm) { errorEl.textContent = 'همه فیلدها الزامی هستند.'; return; }
+            if (password !== confirm) { errorEl.textContent = 'رمز عبور و تکرار آن مطابقت ندارند.'; return; }
+            if (password.length < 6) { errorEl.textContent = 'رمز عبور باید حداقل ۶ کاراکتر باشد.'; return; }
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password, confirmPassword: confirm })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    successEl.textContent = 'ثبت‌نام موفق! حالا وارد شوید.';
+                    showLogin();
+                } else {
+                    errorEl.textContent = data.error || 'خطا در ثبت‌نام';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        async function handleLogout() {
+            await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+            currentUser = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            navigateTo('/');
+            location.reload();
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('forgotForm').classList.add('hidden');
+            document.getElementById('resetForm').classList.add('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('forgotForm').classList.add('hidden');
+            document.getElementById('resetForm').classList.add('hidden');
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('forgotForm').classList.remove('hidden');
+            document.getElementById('resetForm').classList.add('hidden');
+        }
+
+        function handleTelegramLogin() {
+            // ارسال درخواست به ربات برای WebApp
+            // این تابع توسط ربات مدیریت میشه
+            alert('لطفاً از طریق ربات تلگرام وارد شوید.');
+        }
+
+        // ---------- فراموشی رمز ----------
+        async function handleForgotPassword() {
+            const email = document.getElementById('forgotEmail').value;
+            const errorEl = document.getElementById('forgotError');
+            const successEl = document.getElementById('forgotSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+            if (!email) { errorEl.textContent = 'ایمیل را وارد کنید.'; return; }
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    successEl.textContent = 'کد تأیید به ایمیل شما ارسال شد.';
+                    document.getElementById('resetEmail').value = email;
+                    document.getElementById('forgotForm').classList.add('hidden');
+                    document.getElementById('resetForm').classList.remove('hidden');
+                } else {
+                    errorEl.textContent = data.error || 'خطا';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        async function handleResetPassword() {
+            const email = document.getElementById('resetEmail').value;
+            const otp = document.getElementById('resetOtp').value;
+            const password = document.getElementById('resetPassword').value;
+            const confirm = document.getElementById('resetConfirmPassword').value;
+            const errorEl = document.getElementById('resetError');
+            const successEl = document.getElementById('resetSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+            if (!email || !otp || !password || !confirm) { errorEl.textContent = 'همه فیلدها الزامی هستند.'; return; }
+            if (password !== confirm) { errorEl.textContent = 'رمز عبور مطابقت ندارد.'; return; }
+            if (password.length < 6) { errorEl.textContent = 'رمز عبور باید حداقل ۶ کاراکتر باشد.'; return; }
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp, newPassword: password, confirmPassword: confirm })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    successEl.textContent = 'رمز عبور با موفقیت تغییر یافت.';
+                    await checkAuth();
+                    navigateTo('/');
+                } else {
+                    errorEl.textContent = data.error || 'خطا';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        // ---------- اتاق‌ها ----------
+        async function handleBuildRoom() {
+            if (!currentUser) {
+                navigateTo('/auth');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/api/rooms/create`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('اتاق با موفقیت ساخته شد! کد: ' + data.room.code);
+                    navigateTo('/my-rooms');
+                } else {
+                    alert(data.error || 'خطا در ساخت اتاق');
+                }
+            } catch (e) { alert('خطا در ارتباط با سرور'); }
+        }
+
+        async function loadMyRooms() {
+            const container = document.getElementById('myRoomsContainer');
+            if (!currentUser) {
+                container.innerHTML = '<p style="color:#888;">لطفاً وارد حساب خود شوید.</p>';
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/api/rooms/my/rooms`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.success && data.rooms.length > 0) {
+                    let html = '';
+                    for (const room of data.rooms) {
+                        html += `
+                            <div style="background:#14142a;border-radius:16px;padding:16px;border:1px solid #2a2a50;margin-bottom:12px;">
+                                <div class="flex-between">
+                                    <div>
+                                        <strong style="color:#f0b90b;">${room.name}</strong>
+                                        <span style="color:#888;font-size:13px;">کد: ${room.code}</span>
+                                    </div>
+                                    <div>
+                                        <span style="color:#888;font-size:13px;">👥 ${room.currentUsers}/${room.maxUsers}</span>
+                                        <button onclick="enterRoom('${room.code}')" style="padding:4px 16px;border:none;border-radius:20px;background:#f0b90b;color:#0a0a1a;font-weight:bold;margin-right:8px;">ورود</button>
+                                        <button onclick="editRoomName('${room.id}','${room.name}')" style="padding:4px 12px;border:none;border-radius:20px;background:#2a2a50;color:#aaa;">✏️</button>
+                                    </div>
+                                </div>
+                                <div style="color:#888;font-size:12px;">انقضا: ${new Date(room.expiresAt).toLocaleDateString('fa-IR')}</div>
+                            </div>
+                        `;
+                    }
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <p style="color:#888;">هیچ اتاقی ندارید.</p>
+                        <button class="btn-submit" style="width:auto;padding:8px 24px;margin-top:12px;" onclick="handleBuildRoom()">ساخت اتاق جدید</button>
+                    `;
+                }
+            } catch (e) {
+                container.innerHTML = '<p style="color:#ff5252;">خطا در دریافت اتاق‌ها</p>';
+            }
+        }
+
+        async function editRoomName(roomId, currentName) {
+            const newName = prompt('نام جدید اتاق را وارد کنید:', currentName);
+            if (!newName || newName.trim() === '') return;
+            try {
+                const res = await fetch(`${API_BASE}/api/rooms/${roomId}/name`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name: newName.trim() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadMyRooms();
+                } else {
+                    alert(data.error || 'خطا');
+                }
+            } catch (e) { alert('خطا در ارتباط با سرور'); }
+        }
+
+        function enterRoom(code) {
+            navigateTo(`/room/${code}`);
+        }
+
+        // ---------- ورود به اتاق (Socket) ----------
+        async function joinRoom(code) {
+            currentRoomCode = code;
+            // اتصال به Socket.io
+            if (socket) socket.disconnect();
+            socket = io({
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                console.log('🔗 متصل به Socket.io');
+                // ارسال درخواست ورود
+                if (currentUser) {
+                    socket.emit('join-room', {
+                        roomId: code,
+                        userId: currentUser.id,
+                        username: currentUser.displayName
+                    });
+                }
+            });
+
+            socket.on('room-state', (state) => {
+                document.getElementById('roomName').textContent = state.name || 'اتاق';
+                document.getElementById('roomCode').textContent = 'کد: ' + code;
+                if (state.videoUrl) {
+                    document.getElementById('videoUrlInput').value = state.videoUrl;
+                    document.getElementById('roomVideo').src = state.videoUrl;
+                }
+                if (state.isPlaying) {
+                    document.getElementById('roomVideo').play();
+                } else {
+                    document.getElementById('roomVideo').pause();
+                }
+                if (state.currentTime) {
+                    document.getElementById('roomVideo').currentTime = state.currentTime;
+                }
+                document.getElementById('roomUsers').textContent = '👥 ' + (state.users ? state.users.length : 0) + ' نفر';
+                isRoomOwner = state.isOwner || false;
+            });
+
+            socket.on('user-joined', (data) => {
+                addRoomChatMessage('🟢 ' + data.username + ' وارد اتاق شد', 'system');
+            });
+
+            socket.on('user-left', (data) => {
+                addRoomChatMessage('🔴 یک کاربر خارج شد', 'system');
+            });
+
+            socket.on('play', (time) => {
+                document.getElementById('roomVideo').currentTime = time;
+                document.getElementById('roomVideo').play();
+            });
+
+            socket.on('pause', (time) => {
+                document.getElementById('roomVideo').currentTime = time;
+                document.getElementById('roomVideo').pause();
+            });
+
+            socket.on('seek', (time) => {
+                document.getElementById('roomVideo').currentTime = time;
+            });
+
+            socket.on('chat-message', (data) => {
+                addRoomChatMessage(data.username + ': ' + data.message, 'user');
+            });
+
+            socket.on('reaction', (data) => {
+                addRoomChatMessage(data.username + ' ' + data.emoji, 'reaction');
+            });
+
+            socket.on('join-request', (data) => {
+                if (isRoomOwner) {
+                    if (confirm(`کاربر ${data.username} درخواست ورود به اتاق دارد. قبول میکنید؟`)) {
+                        // تایید درخواست
+                        socket.emit('approve-join', { userId: data.userId });
+                    } else {
+                        socket.emit('reject-join', { userId: data.userId });
+                    }
+                }
+            });
+
+            socket.on('join-approved', (data) => {
+                addRoomChatMessage('✅ ' + data.username + ' وارد اتاق شد', 'system');
+            });
+
+            socket.on('join-rejected', (data) => {
+                addRoomChatMessage('❌ درخواست شما رد شد', 'system');
+            });
+
+            socket.on('user-banned', (data) => {
+                addRoomChatMessage('⛔ کاربری بن شد', 'system');
+            });
+
+            socket.on('user-muted', (data) => {
+                addRoomChatMessage('🔇 کاربری سکوت شد', 'system');
+            });
+
+            socket.on('user-unmuted', (data) => {
+                addRoomChatMessage('🔊 سکوت یک کاربر برداشته شد', 'system');
+            });
+
+            socket.on('error', (msg) => {
+                alert('خطا: ' + msg);
+            });
+
+            // دریافت اطلاعات اتاق از سرور (HTTP)
+            try {
+                const res = await fetch(`${API_BASE}/api/rooms/${code}`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('roomName').textContent = data.room.name || 'اتاق';
+                    document.getElementById('roomCode').textContent = 'کد: ' + code;
+                    isRoomOwner = data.room.isOwner || false;
+                    if (data.room.currentVideo) {
+                        document.getElementById('videoUrlInput').value = data.room.currentVideo;
+                        document.getElementById('roomVideo').src = data.room.currentVideo;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // ---------- کنترل‌های اتاق ----------
+        function roomPlay() {
+            if (socket && currentRoomCode) {
+                const time = document.getElementById('roomVideo').currentTime;
+                socket.emit('play', { roomId: currentRoomCode, time });
+                document.getElementById('roomVideo').play();
+            }
+        }
+
+        function roomPause() {
+            if (socket && currentRoomCode) {
+                const time = document.getElementById('roomVideo').currentTime;
+                socket.emit('pause', { roomId: currentRoomCode, time });
+                document.getElementById('roomVideo').pause();
+            }
+        }
+
+        function roomSeek(offset) {
+            if (socket && currentRoomCode) {
+                const video = document.getElementById('roomVideo');
+                const newTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + offset));
+                video.currentTime = newTime;
+                socket.emit('seek', { roomId: currentRoomCode, time: newTime });
+            }
+        }
+
+        function handlePlayVideo() {
+            const url = document.getElementById('videoUrlInput').value.trim();
+            if (!url) { alert('لطفاً لینک فیلم را وارد کنید.'); return; }
+            if (socket && currentRoomCode) {
+                socket.emit('play-video', { roomId: currentRoomCode, url });
+                document.getElementById('roomVideo').src = url;
+                document.getElementById('roomVideo').play();
+                document.getElementById('roomNowPlaying').textContent = '🎬 در حال پخش: ' + url;
+            }
+        }
+
+        function copyRoomCode() {
+            const code = document.getElementById('roomCode').textContent.replace('کد: ', '');
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ کد اتاق کپی شد!');
+            }).catch(() => {
+                prompt('کد اتاق را کپی کنید:', code);
+            });
+        }
+
+        function sendRoomChat() {
+            const input = document.getElementById('roomChatInput');
+            const msg = input.value.trim();
+            if (!msg || !socket || !currentRoomCode) return;
+            socket.emit('chat-message', {
+                roomId: currentRoomCode,
+                username: currentUser ? currentUser.displayName : 'کاربر',
+                message: msg,
+                time: new Date().toLocaleTimeString('fa-IR')
+            });
+            input.value = '';
+            addRoomChatMessage('شما: ' + msg, 'self');
+        }
+
+        function sendReaction(emoji) {
+            if (!socket || !currentRoomCode) return;
+            socket.emit('reaction', {
+                roomId: currentRoomCode,
+                username: currentUser ? currentUser.displayName : 'کاربر',
+                emoji: emoji,
+                time: new Date().toLocaleTimeString('fa-IR')
+            });
+        }
+
+        function addRoomChatMessage(text, type = 'user') {
+            const container = document.getElementById('roomChat');
+            const div = document.createElement('div');
+            div.className = 'msg';
+            if (type === 'system') {
+                div.style.color = '#888';
+                div.style.justifyContent = 'center';
+                div.textContent = text;
+            } else if (type === 'self') {
+                div.style.color = '#f0b90b';
+                div.textContent = text;
+            } else if (type === 'reaction') {
+                div.style.fontSize = '20px';
+                div.textContent = text;
+            } else {
+                div.innerHTML = text;
+            }
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            if (container.children.length > 100) {
+                container.removeChild(container.firstChild);
+            }
+        }
+
+        function leaveRoom() {
+            if (confirm('آیا از خروج از اتاق مطمئن هستید؟')) {
+                if (socket) socket.disconnect();
+                navigateTo('/my-rooms');
+            }
+        }
+
+        // ---------- فیلم‌ها ----------
+        async function loadMovies(page = 1) {
+            moviePage = page;
+            const search = document.getElementById('movieSearch').value;
+            const type = document.getElementById('movieType').value;
+            const genre = document.getElementById('movieGenre').value;
+            const country = document.getElementById('movieCountry').value;
+            const dub = document.getElementById('movieDub').value;
+            const grid = document.getElementById('movieGrid');
+            const pagination = document.getElementById('moviePagination');
+            grid.innerHTML = '<div style="text-align:center;color:#888;padding:20px 0;">در حال بارگذاری...</div>';
+
+            const params = new URLSearchParams({ page, limit: 10 });
+            if (search) params.append('search', search);
+            if (type) params.append('type', type);
+            if (genre) params.append('genre', genre);
+            if (country) params.append('country', country);
+            if (dub) params.append('dubType', dub);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/movies?${params}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('movieCount').textContent = data.pagination.total + ' عنوان';
+                    if (data.movies.length === 0) {
+                        grid.innerHTML = '<div style="text-align:center;color:#888;padding:40px 0;">فیلمی یافت نشد.</div>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    let html = '';
+                    for (const movie of data.movies) {
+                        const poster = movie.poster ? `/uploads/posters/${movie.poster}` :
+                            'https://via.placeholder.com/300x450/1a1a36/888?text=No+Poster';
+                        html += `
+                            <div class="movie-card" onclick="playMovie('${movie.id}')">
+                                <img src="${poster}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/300x450/1a1a36/888?text=No+Poster'" />
+                                <div class="info">
+                                    <div class="title">${movie.title}</div>
+                                    <div class="meta">
+                                        <span class="badge">${movie.type === 'movie' ? 'فیلم' : movie.type === 'series' ? 'سریال' : 'انیمیشن'}</span>
+                                        ${movie.imdb_rating ? `<span class="badge">⭐ ${movie.imdb_rating}</span>` : ''}
+                                        ${movie.year ? `<span class="badge">${movie.year}</span>` : ''}
+                                    </div>
+                                    <div class="meta" style="margin-top:4px;">
+                                        <span>${movie.genre || ''}</span>
+                                        <span>${movie.country || ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    grid.innerHTML = html;
+
+                    // صفحه‌بندی
+                    const total = data.pagination.totalPages;
+                    if (total > 1) {
+                        let pagHtml = '';
+                        for (let i = 1; i <= total; i++) {
+                            pagHtml +=
+                                `<button onclick="loadMovies(${i})" style="padding:4px 12px;border:none;border-radius:20px;background:${i === page ? '#f0b90b' : '#2a2a50'};color:${i === page ? '#0a0a1a' : '#aaa'};margin:2px;cursor:pointer;">${i}</button>`;
+                        }
+                        pagination.innerHTML = pagHtml;
+                    } else {
+                        pagination.innerHTML = '';
+                    }
+                }
+            } catch (e) {
+                grid.innerHTML = '<div style="text-align:center;color:#ff5252;padding:20px 0;">خطا در بارگذاری فیلم‌ها</div>';
+            }
+        }
+
+        async function playMovie(movieId) {
+            if (!currentUser) {
+                alert('لطفاً وارد حساب خود شوید.');
+                navigateTo('/auth');
+                return;
+            }
+            // بررسی اشتراک
+            try {
+                const res = await fetch(`${API_BASE}/api/movies/${movieId}`);
+                const data = await res.json();
+                if (data.success) {
+                    const movie = data.movie;
+                    // اگر سریال بود، اولین لینک رو پخش کن
+                    let link = movie.links && movie.links.length > 0 ? movie.links[0].link : '';
+                    if (link) {
+                        // به اتاق برو و فیلم رو پخش کن
+                        const roomRes = await fetch(`${API_BASE}/api/rooms/my/rooms`, { credentials: 'include' });
+                        const roomData = await roomRes.json();
+                        if (roomData.success && roomData.rooms.length > 0) {
+                            const roomCode = roomData.rooms[0].code;
+                            navigateTo(`/room/${roomCode}`);
+                            // بعد از ورود به اتاق، فیلم رو پخش کن
+                            setTimeout(() => {
+                                document.getElementById('videoUrlInput').value = link;
+                                handlePlayVideo();
+                            }, 500);
+                        } else {
+                            alert('شما اتاقی ندارید. لطفاً ابتدا یک اتاق بسازید.');
+                            handleBuildRoom();
+                        }
+                    } else {
+                        alert('لینکی برای این فیلم وجود ندارد.');
+                    }
+                }
+            } catch (e) { alert('خطا'); }
+        }
+
+        // ---------- تعرفه‌ها ----------
+        function loadPlans() {
+            const container = document.getElementById('plansContainer');
+            const plans = [{
+                id: '1m_2u',
+                name: 'یک ماهه - ۲ کاربره',
+                duration: '۳۱ روز',
+                users: 2,
+                price: 95000,
+                discount: 0,
+                popular: true
+            }, {
+                id: '1m_5u',
+                name: 'یک ماهه - ۵ کاربره',
+                duration: '۳۱ روز',
+                users: 5,
+                price: 175000,
+                discount: 0,
+                popular: false
+            }, {
+                id: '3m_2u',
+                name: 'سه ماهه - ۲ کاربره',
+                duration: '۹۳ روز',
+                users: 2,
+                price: 225000,
+                discount: 20,
+                popular: true
+            }, {
+                id: '3m_5u',
+                name: 'سه ماهه - ۵ کاربره',
+                duration: '۹۳ روز',
+                users: 5,
+                price: 420000,
+                discount: 20,
+                popular: false
+            }, {
+                id: '6m_2u',
+                name: 'شش ماهه - ۲ کاربره',
+                duration: '۱۸۶ روز',
+                users: 2,
+                price: 399000,
+                discount: 30,
+                popular: false
+            }, {
+                id: '6m_5u',
+                name: 'شش ماهه - ۵ کاربره',
+                duration: '۱۸۶ روز',
+                users: 5,
+                price: 735000,
+                discount: 30,
+                popular: false
+            }, {
+                id: '1y_2u',
+                name: 'یک ساله - ۲ کاربره',
+                duration: '۳۶۶ روز',
+                users: 2,
+                price: 685000,
+                discount: 40,
+                popular: false
+            }, {
+                id: '1y_5u',
+                name: 'یک ساله - ۵ کاربره',
+                duration: '۳۶۶ روز',
+                users: 5,
+                price: 1260000,
+                discount: 40,
+                popular: false
+            }];
+
+            let html = '';
+            for (const plan of plans) {
+                const finalPrice = plan.price - (plan.price * plan.discount / 100);
+                html += `
+                    <div style="background:${plan.popular ? '#1a1a3a' : '#14142a'};border-radius:20px;padding:18px;border:1px solid ${plan.popular ? '#f0b90b' : '#2a2a50'};">
+                        <div class="flex-between">
+                            <div>
+                                <h3 style="color:#f0b90b;">${plan.name}</h3>
+                                <div style="color:#888;font-size:13px;">${plan.duration} | ${plan.users} کاربره</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="font-size:22px;font-weight:bold;color:#f0b90b;">${finalPrice.toLocaleString()} تومان</div>
+                                ${plan.discount > 0 ? `<div style="color:#ff5252;font-size:12px;text-decoration:line-through;">${plan.price.toLocaleString()} تومان</div>` : ''}
+                                ${plan.discount > 0 ? `<div style="color:#4caf50;font-size:12px;">${plan.discount}% تخفیف</div>` : ''}
+                            </div>
+                        </div>
+                        <button class="btn-submit" style="width:auto;padding:8px 24px;margin-top:12px;" onclick="buyPlan('${plan.id}')">خرید اشتراک</button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function buyPlan(planId) {
+            if (!currentUser) {
+                alert('لطفاً وارد حساب خود شوید.');
+                navigateTo('/auth');
+                return;
+            }
+            navigateTo(`/buy/${planId}`);
+            // پر کردن اطلاعات در صفحه خرید
+            const plans = {
+                '1m_2u': { title: 'یک ماهه - ۲ کاربره', price: '۹۵,۰۰۰ تومان' },
+                '1m_5u': { title: 'یک ماهه - ۵ کاربره', price: '۱۷۵,۰۰۰ تومان' },
+                '3m_2u': { title: 'سه ماهه - ۲ کاربره', price: '۲۲۵,۰۰۰ تومان' },
+                '3m_5u': { title: 'سه ماهه - ۵ کاربره', price: '۴۲۰,۰۰۰ تومان' },
+                '6m_2u': { title: 'شش ماهه - ۲ کاربره', price: '۳۹۹,۰۰۰ تومان' },
+                '6m_5u': { title: 'شش ماهه - ۵ کاربره', price: '۷۳۵,۰۰۰ تومان' },
+                '1y_2u': { title: 'یک ساله - ۲ کاربره', price: '۶۸۵,۰۰۰ تومان' },
+                '1y_5u': { title: 'یک ساله - ۵ کاربره', price: '۱,۲۶۰,۰۰۰ تومان' },
+            };
+            const plan = plans[planId];
+            if (plan) {
+                document.getElementById('buyPlanTitle').textContent = plan.title;
+                document.getElementById('buyPlanPrice').textContent = plan.price;
+                document.getElementById('buyPlanPrice').dataset.planId = planId;
+            }
+        }
+
+        async function handleBuySubscription() {
+            const fileInput = document.getElementById('screenshotInput');
+            const planId = document.getElementById('buyPlanPrice').dataset.planId;
+            const errorEl = document.getElementById('buyError');
+            const successEl = document.getElementById('buySuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            if (!planId) { errorEl.textContent = 'لطفاً یک پلن انتخاب کنید.'; return; }
+            if (!fileInput.files || !fileInput.files[0]) { errorEl.textContent = 'لطفاً اسکرین‌شات را آپلود کنید.'; return; }
+
+            const formData = new FormData();
+            formData.append('planType', planId);
+            formData.append('screenshot', fileInput.files[0]);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/orders/create`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    successEl.textContent = 'سفارش شما ثبت شد. پس از تأیید ادمین، اشتراک شما فعال می‌شود.';
+                    fileInput.value = '';
+                } else {
+                    errorEl.textContent = data.error || 'خطا در ثبت سفارش';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        // ---------- پروفایل ----------
+        async function loadProfile() {
+            if (!currentUser) {
+                navigateTo('/auth');
+                return;
+            }
+            document.getElementById('profileDisplayName').textContent = currentUser.displayName || currentUser.username;
+            document.getElementById('profileUsername').textContent = '@' + currentUser.username;
+            document.getElementById('profileEmail').textContent = currentUser.email || 'ایمیل ثبت نشده';
+            document.getElementById('editDisplayName').value = currentUser.displayName || '';
+            document.getElementById('editUsername').value = currentUser.username || '';
+            document.getElementById('profileAvatar').src = currentUser.avatar ? '/uploads/avatars/' + currentUser.avatar :
+                'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.displayName || currentUser.username) +
+                '&background=f0b90b&color=0a0a1a&size=70';
+        }
+
+        async function updateProfile() {
+            const displayName = document.getElementById('editDisplayName').value.trim();
+            const username = document.getElementById('editUsername').value.trim();
+            const avatarFile = document.getElementById('editAvatar').files[0];
+            const errorEl = document.getElementById('profileError');
+            const successEl = document.getElementById('profileSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            if (!displayName || !username) { errorEl.textContent = 'نام و نام کاربری الزامی است.'; return; }
+
+            const formData = new FormData();
+            formData.append('displayName', displayName);
+            formData.append('username', username);
+            if (avatarFile) formData.append('avatar', avatarFile);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/profile/update`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    successEl.textContent = 'اطلاعات با موفقیت به‌روز شد.';
+                    await checkAuth();
+                    loadProfile();
+                } else {
+                    errorEl.textContent = data.error || 'خطا';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        async function connectTelegram() {
+            const telegramId = document.getElementById('telegramIdInput').value.trim();
+            const errorEl = document.getElementById('telegramError');
+            const successEl = document.getElementById('telegramSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+            if (!telegramId) { errorEl.textContent = 'آیدی تلگرام را وارد کنید.'; return; }
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/send-telegram-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ telegramId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const otp = prompt('کد تأیید به تلگرام شما ارسال شد. کد را وارد کنید:');
+                    if (otp) {
+                        const verifyRes = await fetch(`${API_BASE}/api/auth/verify-telegram-otp`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ otp })
+                        });
+                        const verifyData = await verifyRes.json();
+                        if (verifyData.success) {
+                            successEl.textContent = 'حساب شما با موفقیت به تلگرام متصل شد.';
+                        } else {
+                            errorEl.textContent = verifyData.error || 'خطا در تأیید کد';
+                        }
+                    }
+                } else {
+                    errorEl.textContent = data.error || 'خطا';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        async function changePassword() {
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmNewPassword').value;
+            const errorEl = document.getElementById('passwordError');
+            const successEl = document.getElementById('passwordSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+            if (!oldPass || !newPass || !confirmPass) { errorEl.textContent = 'همه فیلدها الزامی هستند.'; return; }
+            if (newPass !== confirmPass) { errorEl.textContent = 'رمز عبور جدید مطابقت ندارد.'; return; }
+            if (newPass.length < 6) { errorEl.textContent = 'رمز عبور جدید باید حداقل ۶ کاراکتر باشد.'; return; }
+            try {
+                const res = await fetch(`${API_BASE}/api/profile/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass, confirmPassword: confirmPass })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    successEl.textContent = 'رمز عبور با موفقیت تغییر یافت.';
+                    document.getElementById('oldPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmNewPassword').value = '';
+                } else {
+                    errorEl.textContent = data.error || 'خطا';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        // ---------- چت عمومی ----------
+        let publicSocket = null;
+
+        function initPublicChat() {
+            if (!currentUser) {
+                document.getElementById('publicChat').innerHTML =
+                    '<div class="msg" style="color:#ff5252;justify-content:center;">لطفاً وارد حساب خود شوید تا بتوانید در چت عمومی پیام بفرستید.</div>';
+                return;
+            }
+            if (!publicSocket) {
+                publicSocket = io('/public-chat', { transports: ['websocket', 'polling'] });
+                publicSocket.on('connect', () => {
+                    console.log('🔗 متصل به چت عمومی');
+                    publicSocket.emit('join-public', { userId: currentUser.id, username: currentUser.displayName });
+                });
+                publicSocket.on('public-message', (data) => {
+                    addPublicChatMessage(data.username + ': ' + data.message);
+                });
+                publicSocket.on('public-join', (data) => {
+                    addPublicChatMessage('🟢 ' + data + ' وارد چت شد', 'system');
+                });
+                publicSocket.on('public-leave', (data) => {
+                    addPublicChatMessage('🔴 ' + data + ' خارج شد', 'system');
+                });
+            }
+        }
+
+        function addPublicChatMessage(text, type = 'user') {
+            const container = document.getElementById('publicChat');
+            const div = document.createElement('div');
+            div.className = 'msg';
+            if (type === 'system') {
+                div.style.color = '#888';
+                div.style.justifyContent = 'center';
+                div.textContent = text;
+            } else {
+                div.textContent = text;
+            }
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendPublicChat() {
+            const input = document.getElementById('publicChatInput');
+            const msg = input.value.trim();
+            if (!msg || !publicSocket || !currentUser) return;
+            publicSocket.emit('public-message', {
+                username: currentUser.displayName,
+                message: msg,
+                time: new Date().toLocaleTimeString('fa-IR')
+            });
+            input.value = '';
+        }
+
+        // ---------- پنل ادمین ----------
+        async function loadAdminStats() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/stats`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('statUsers').textContent = data.stats.totalUsers || 0;
+                    document.getElementById('statOrders').textContent = data.stats.totalOrders || 0;
+                    document.getElementById('statPending').textContent = data.stats.pendingOrders || 0;
+                    document.getElementById('statSubs').textContent = data.stats.activeSubscriptions || 0;
+                }
+            } catch (e) {}
+        }
+
+        async function loadAdminUsers() {
+            const container = document.getElementById('adminContent');
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/users`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.success) {
+                    let html = '<table class="admin-table"><thead><tr><th>کاربر</th><th>نام</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
+                    for (const user of data.users) {
+                        html += `
+                            <tr>
+                                <td>${user.username}</td>
+                                <td>${user.display_name || '-'}</td>
+                                <td>${user.is_banned ? '🚫 مسدود' : '✅ فعال'}</td>
+                                <td>
+                                    ${user.is_banned ? `<button class="btn-sm unban" onclick="adminUnban(${user.id})">رفع مسدودیت</button>` : `<button class="btn-sm ban" onclick="adminBan(${user.id})">مسدود</button>`}
+                                    <button class="btn-sm approve" onclick="adminAddSubscription(${user.id})">افزودن اشتراک</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                }
+            } catch (e) { container.innerHTML = '<p style="color:#ff5252;">خطا در بارگذاری کاربران</p>'; }
+        }
+
+        async function loadAdminOrders() {
+            const container = document.getElementById('adminContent');
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/orders`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.success) {
+                    let html = '<table class="admin-table"><thead><tr><th>کاربر</th><th>پلن</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
+                    for (const order of data.orders) {
+                        html += `
+                            <tr>
+                                <td>${order.display_name || order.username}</td>
+                                <td>${order.plan_type}</td>
+                                <td>${order.status === 'pending' ? '⏳ در انتظار' : order.status === 'approved' ? '✅ تأیید شده' : '❌ رد شده'}</td>
+                                <td>
+                                    ${order.status === 'pending' ? `
+                                        <button class="btn-sm approve" onclick="adminApproveOrder(${order.id})">تأیید</button>
+                                        <button class="btn-sm reject" onclick="adminRejectOrder(${order.id})">رد</button>
+                                    ` : '-'}
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                }
+            } catch (e) { container.innerHTML = '<p style="color:#ff5252;">خطا در بارگذاری سفارشات</p>'; }
+        }
+
+        async function adminBan(userId) {
+            if (!confirm('آیا از مسدود کردن این کاربر مطمئن هستید؟')) return;
+            const reason = prompt('دلیل مسدودیت:');
+            try {
+                await fetch(`${API_BASE}/api/admin/users/ban`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId, reason: reason || 'بدون دلیل' })
+                });
+                loadAdminUsers();
+            } catch (e) {}
+        }
+
+        async function adminUnban(userId) {
+            if (!confirm('آیا از رفع مسدودیت این کاربر مطمئن هستید؟')) return;
+            try {
+                await fetch(`${API_BASE}/api/admin/users/unban`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId })
+                });
+                loadAdminUsers();
+            } catch (e) {}
+        }
+
+        async function adminAddSubscription(userId) {
+            const days = prompt('تعداد روزهای اشتراک:');
+            if (!days) return;
+            const maxUsers = prompt('تعداد کاربران مجاز در اتاق (۲ یا ۵):');
+            if (!maxUsers) return;
+            try {
+                await fetch(`${API_BASE}/api/admin/users/subscription`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId, planType: 'custom', durationDays: parseInt(days), maxUsers: parseInt(
+                            maxUsers) })
+                });
+                alert('اشتراک با موفقیت اضافه شد.');
+            } catch (e) {}
+        }
+
+        async function adminApproveOrder(orderId) {
+            try {
+                await fetch(`${API_BASE}/api/admin/orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ status: 'approved', adminNote: 'تأیید شد' })
+                });
+                loadAdminOrders();
+            } catch (e) {}
+        }
+
+        async function adminRejectOrder(orderId) {
+            const note = prompt('دلیل رد سفارش:');
+            try {
+                await fetch(`${API_BASE}/api/admin/orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ status: 'rejected', adminNote: note || 'رد شد' })
+                });
+                loadAdminOrders();
+            } catch (e) {}
+        }
+
+        // ---------- افزودن فیلم توسط ادمین ----------
+        let episodeLinksList = [];
+
+        function showAddMovieForm() {
+            document.getElementById('addMovieForm').classList.toggle('hidden');
+            document.getElementById('adminContent').innerHTML = '';
+        }
+
+        function addEpisodeLink() {
+            const link = document.getElementById('episodeLinkInput').value.trim();
+            const number = document.getElementById('episodeNumberInput').value.trim();
+            if (!link || !number) { alert('لینک و شماره قسمت را وارد کنید.'); return; }
+            episodeLinksList.push({ episodeNumber: parseInt(number), url: link });
+            document.getElementById('episodeLinkInput').value = '';
+            document.getElementById('episodeNumberInput').value = '';
+            renderEpisodeLinks();
+        }
+
+        function renderEpisodeLinks() {
+            const container = document.getElementById('episodeLinksList');
+            container.innerHTML = episodeLinksList.map((el, i) =>
+                `<span style="background:#2a2a50;padding:2px 12px;border-radius:20px;font-size:12px;">قسمت ${el.episodeNumber} <span onclick="episodeLinksList.splice(${i},1);renderEpisodeLinks();" style="cursor:pointer;color:#ff5252;">✕</span></span>`
+            ).join('');
+        }
+
+        async function submitMovie() {
+            const type = document.getElementById('movieTypeInput').value;
+            const title = document.getElementById('movieTitleInput').value.trim();
+            const posterFile = document.getElementById('moviePosterInput').files[0];
+            const dubType = document.getElementById('movieDubInput').value;
+            const genre = document.getElementById('movieGenreInput').value.trim();
+            const rating = document.getElementById('movieRatingInput').value;
+            const year = document.getElementById('movieYearInput').value;
+            const country = document.getElementById('movieCountryInput').value.trim();
+            const ageRating = document.getElementById('movieAgeInput').value.trim();
+            const summary = document.getElementById('movieSummaryInput').value.trim();
+            const extra = document.getElementById('movieExtraInput').value.trim();
+            const errorEl = document.getElementById('movieFormError');
+            const successEl = document.getElementById('movieFormSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            if (!title || !posterFile) { errorEl.textContent = 'عنوان و پوستر الزامی هستند.'; return; }
+
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('title', title);
+            formData.append('poster', posterFile);
+            formData.append('dubType', dubType);
+            formData.append('genre', genre);
+            formData.append('imdbRating', rating);
+            formData.append('year', year);
+            formData.append('country', country);
+            formData.append('ageRating', ageRating);
+            formData.append('summary', summary);
+            formData.append('extraInfo', extra);
+
+            // لینک‌ها
+            if (type === 'series') {
+                for (const link of episodeLinksList) {
+                    formData.append('links[]', JSON.stringify(link));
+                }
+            } else {
+                const link = document.getElementById('episodeLinkInput').value.trim();
+                if (link) {
+                    formData.append('links[]', JSON.stringify({ episodeNumber: 0, url: link }));
+                }
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/movies`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    successEl.textContent = 'فیلم/سریال با موفقیت اضافه شد.';
+                    // پاک کردن فرم
+                    document.getElementById('movieTitleInput').value = '';
+                    document.getElementById('moviePosterInput').value = '';
+                    document.getElementById('movieGenreInput').value = '';
+                    document.getElementById('movieRatingInput').value = '';
+                    document.getElementById('movieYearInput').value = '';
+                    document.getElementById('movieCountryInput').value = '';
+                    document.getElementById('movieAgeInput').value = '';
+                    document.getElementById('movieSummaryInput').value = '';
+                    document.getElementById('movieExtraInput').value = '';
+                    episodeLinksList = [];
+                    renderEpisodeLinks();
+                } else {
+                    errorEl.textContent = data.error || 'خطا';
+                }
+            } catch (e) { errorEl.textContent = 'خطا در ارتباط با سرور'; }
+        }
+
+        // ---------- مقداردهی اولیه ----------
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            // اگر کاربر لاگین است و در صفحه اصلی است، پیام خوش‌آمدگویی
+            if (currentUser) {
+                console.log('👋 خوش آمدی ' + currentUser.displayName);
+            }
+            // نمایش صفحه اصلی
+            navigateTo('/');
+            // بارگذاری ژانرها و کشورها برای فیلتر (اختیاری)
+            // بارگذاری تعرفه‌ها در صورت نیاز
+        });
+
+        // مدیریت دکمه بک مرورگر (برای SPA)
+        window.addEventListener('popstate', () => {
+            const path = window.location.pathname || '/';
+            navigateTo(path);
+        });
+
+        // وقتی صفحه لود شد، مسیر رو از URL بگیر
+        const initialPath = window.location.pathname || '/';
+        navigateTo(initialPath);
+
+        console.log('🎬 سینما لایو - فرانت‌اند راه‌اندازی شد!');
+    </script>
+</body>
+</html>
